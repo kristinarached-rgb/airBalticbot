@@ -1,8 +1,9 @@
-
 import discord
 from discord.ext import commands
 import os
 from datetime import datetime
+from flask import Flask
+from threading import Thread
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -20,7 +21,6 @@ current_rules = (
 )
 current_footer = "Thank you for cooperating! Safe flying out there in PTFS."
 
-# Default flight data stored in live memory
 flight_data = {
     "number": "BT-001",
     "status": "SCHEDULED",
@@ -50,15 +50,67 @@ async def on_member_join(member):
         )
         await welcome_channel.send(welcome_text)
 
-# 1. New Dynamic Flight Tracking Command
+# 1. Official Fleet Command
+@bot.command()
+async def fleet(ctx):
+    embed = discord.Embed(
+        title="✈️ AIRBALTIC OFFICIAL AIRCRAFT FLEET",
+        description="airBaltic proudly operates the most modern, efficient, and environmentally friendly single-type fleet in virtual aviation.",
+        color=0xCDDA32
+    )
+    embed.add_field(
+        name="🛩️ Flagship Aircraft: Airbus A220-300", 
+        value=(
+            "• **Seating Capacity:** 145/148 Seats (Dual-Class Configuration)\n"
+            "• **Propulsion:** Pratt & Whitney GTF Engines\n"
+            "• **Cruising Speed:** Mach 0.78 (829 km/h)\n"
+            "• **Maximum Range:** 6,112 km (3,300 nmi)\n"
+            "• **PTFS Flight Status:** Fully operational for mainline routes."
+        ), 
+        inline=False
+    )
+    embed.set_footer(text="Think Green, Fly Green. Thank you for choosing airBaltic!")
+    await ctx.send(embed=embed)
+
+# 2. Rules Command
+@bot.command()
+async def rules(ctx):
+    embed = discord.Embed(
+        title="📜 AIRBALTIC OFFICIAL SERVER RULES",
+        description="Welcome to airBaltic! Please follow our official airline guidelines:",
+        color=0xCDDA32
+    )
+    embed.add_field(name="Current Server Guidelines:", value=current_rules, inline=False)
+    embed.set_footer(text=current_footer)
+    await ctx.send(embed=embed)
+
+# 3. Rule Changer Command
+@bot.command()
+async def setrules(ctx, *, new_text: str):
+    global current_rules
+    if ctx.author.guild_permissions.administrator:
+        current_rules = new_text
+        await ctx.send("✅ **CEO Update Complete:** Rules updated!")
+    else:
+        await ctx.send("❌ Access Denied.")
+
+# 4. Footer Changer Command
+@bot.command()
+async def setfooter(ctx, *, new_footer: str):
+    global current_footer
+    if ctx.author.guild_permissions.administrator:
+        current_footer = new_footer
+        await ctx.send("✅ **CEO Update Complete:** Footer updated!")
+    else:
+        await ctx.send("❌ Access Denied.")
+
+# 5. Flight Tracking Command
 @bot.command()
 async def flight(ctx):
     embed = discord.Embed(
         title="✈️ AIRBALTIC OFFICIAL FLIGHT ANNOUNCEMENT ✈️",
-        color=0xCDDA32 # airBaltic primary yellow-green
+        color=0xCDDA32
     )
-    
-    # Check if this is the inaugural august flight to calculate a real-time countdown day tracker
     countdown_str = ""
     if "august 24" in flight_data["date"].lower():
         current_year = datetime.now().year
@@ -73,7 +125,6 @@ async def flight(ctx):
             pass
 
     status_emoji = "🟢" if "boarding" in flight_data["status"].lower() or "active" in flight_data["status"].lower() else "🟡"
-    
     embed.add_field(name="Flight Number:", value=f"`{flight_data['number']}`", inline=True)
     embed.add_field(name="Operations Status:", value=f"{status_emoji} **{flight_data['status'].upper()}**", inline=True)
     embed.add_field(name="Scheduled Date:", value=f"`{flight_data['date']}`{countdown_str}", inline=False)
@@ -82,64 +133,55 @@ async def flight(ctx):
     embed.set_footer(text="Please ensure your flight tickets are ready prior to reaching the gate. Thank you for flying airBaltic!")
     await ctx.send(embed=embed)
 
-# 2. CEO Custom Flight Creator Command (Split items using a slash '/')
+# 6. Custom Flight Creator Command
 @bot.command()
 async def createflight(ctx, *, details: str):
     global flight_data
     if not ctx.author.guild_permissions.administrator:
         await ctx.send("❌ You do not have permission to log flight operations.")
         return
-        
     try:
-        # Example format: BT-102 / BOARDING / August 24th / Gate 3 / London Heathrow
         parts = [p.strip() for p in details.split("/")]
         if len(parts) < 5:
             await ctx.send("❌ **Format Error!** Use: `!createflight FlightNumber / Status / Date / Gate / Destination`")
             return
-            
         flight_data["number"] = parts[0]
         flight_data["status"] = parts[1]
         flight_data["date"] = parts[2]
         flight_data["gate"] = parts[3]
         flight_data["destination"] = parts[4]
-        
-        await ctx.send("✅ **CEO Operations Logged:** Custom flight itinerary generated successfully! Type `!flight` to view.")
+        await ctx.send("✅ **CEO Operations Logged:** Itinerary generated successfully! Type `!flight` to view.")
     except Exception as e:
-        await ctx.send(f"❌ An error occurred formatting the logs: {str(e)}")
+        await ctx.send(f"❌ Error: {str(e)}")
 
-# 3. Rules Command
-@bot.command()
-async def rules(ctx):
-    embed = discord.Embed(
-        title="📜 AIRBALTIC OFFICIAL SERVER RULES",
-        description="Welcome to airBaltic! Please follow our official airline guidelines:",
-        color=0xCDDA32
-    )
-    embed.add_field(name="Current Server Guidelines:", value=current_rules, inline=False)
-    embed.set_footer(text=current_footer)
-    await ctx.send(embed=embed)
-
-# 4. Rule Changer Command
-@bot.command()
-async def setrules(ctx, *, new_text: str):
-    global current_rules
-    if ctx.author.guild_permissions.administrator:
-        current_rules = new_text
-        await ctx.send("✅ **CEO Update Complete:** Rules updated!")
-    else:
-        await ctx.send("❌ Access Denied.")
-
-# 5. Recruitment Board Command
+# 7. Recruitment Command
 @bot.command()
 async def hiring(ctx):
     ad_text = (
         "🇱🇻  **airBaltic**\n"
         "`🟢` **`think green, fly green`**\n\n"
-        "> airBaltic is the primary airline of the Baltics, operating an elite, all-Airbus A220-300 fleet. We connect virtual aviators to a wide grid of destinations, delivering a sleek experience from standard economy to our prestigious cabin crew teams.\n\n"
+        "> airBaltic is the primary airline of the Baltics, operating an elite, all-Airbus A220-300 fleet.\n\n"
         "🔹 **Now Hiring Premium Crew:** Elevate your career by managing our elite Business Class cabins.\n"
         "🔹 **Aviation Realism:** Train under advanced flight protocols, structural routes, and live ATC.\n\n"
         "📸 https://imgur.com"
     )
     await ctx.send(ad_text)
 
+# 🌐 BUILT-IN WEB PING SERVER (Prevents 502 Errors)
+app = Flask('')
+
+@app.route('/')
+def home():
+    return "🟢 airBaltic Bot Web Server is Fully Operational!"
+
+def run_web_server():
+    app.run(host='0.0.0.0', port=10000)
+
+def keep_alive():
+    t = Thread(target=run_web_server)
+    t.start()
+
+# Start web listener right before launching bot
+keep_alive()
 bot.run(os.environ.get("DISCORD_TOKEN"))
+
