@@ -4,6 +4,7 @@ import os
 from datetime import datetime
 from flask import Flask
 from threading import Thread
+import random
 
 intents = discord.Intents.default()
 intents.message_content = True
@@ -11,16 +12,22 @@ intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Live memory storage for your rules, footer, and active flight details
+# Core Dynamic Memory Banks
 current_rules = (
-    "1. Follow instructions issued by airBaltic Staff and ATC.\n"
-    "2. Maintain respect toward all passengers and flight crew.\n"
-    "3. Keep conversations relevant to the channel topic.\n"
-    "4. Follow proper taxi and flight protocols during operations.\n"
-    "5. Do not advertise external virtual airlines without permission."
+    "1. While in our Server, follow Roblox's TOS and Discord TOS.\n"
+    "2. Be respectful to anybody in the server no matter what.\n"
+    "3. You are allowed to swear in the server as long it isnt a slur and directed to anybody.\n"
+    "4. Discrimination of any kind is not allowed at all.\n"
+    "5. NSFW, Sexting, or anything inappropriate is not allowed.\n"
+    "6. refrain from spamming, attention seeking in VC, if this happens spammers will be timed out for 5 mins and VC attention seekers will be timed out for 10.\n"
+    "7. This server is English only, as it is hard for our moderators to moderate in other languages.\n"
+    "8. Only use channels for designated purposes.\n"
+    "9. Do not Troll during flights, In VC's or In chats at all.\n"
+    "10. Moderation will be harsh, do not argue with employees at all for any purpose."
 )
 current_footer = "Thank you for cooperating! Safe flying out there in PTFS."
 
+# Global Live Flight Information Storage
 flight_data = {
     "number": "BT-001",
     "status": "SCHEDULED",
@@ -29,159 +36,175 @@ flight_data = {
     "destination": "Riga International Airport (PTFS)"
 }
 
+# Live Passenger Database Tracking
+club_miles = {}
+
 @bot.event
 async def on_ready():
     print(f"🟢 airBaltic Utilities is online as {bot.user.name}!")
-    await bot.change_presence(activity=discord.Game(name="PTFS | flying airBaltic"))
+    await bot.change_presence(activity=discord.Game(name="PTFS | type !commands"))
 
-# 📥 AUTOMATED WELCOME SYSTEM
+# 📥 AUTOMATED WELCOME, AUTO-ROLE & AUTO-NAME SYSTEM
 @bot.event
 async def on_member_join(member):
+    pax_role = discord.utils.get(member.guild.roles, name="Passenger")
+    eco_role = discord.utils.get(member.guild.roles, name="ECO | Economy Class")
+    
+    if pax_role:
+        try: await member.add_roles(pax_role)
+        except Exception: pass
+            
+    if eco_role:
+        try: await member.add_roles(eco_role)
+        except Exception: pass
+
+    try:
+        new_nickname = f"PAX | {member.global_name or member.name}"
+        if len(new_nickname) > 32: 
+            new_nickname = new_nickname[:29] + "..."
+        await member.edit(nick=new_nickname)
+    except Exception: pass
+
     welcome_channel = discord.utils.get(member.guild.text_channels, name="welcome")
     if welcome_channel:
         welcome_text = (
             f"🇱🇻  **Welcome to airBaltic, {member.mention}!**\n"
             f"`🟢` **`think green, fly green`**\n\n"
-            f"> We are thrilled to have you step aboard the Baltics' premier virtual airline!\n\n"
-            f"🔹 **Step 1:** Review our official operating guidelines in `!rules`.\n"
-            f"🔹 **Step 2:** Check out our current flight status with `!flight`.\n"
-            f"🔹 **Step 3:** Stay tuned for our massive **August 24th Inaugural Flight** event!\n\n"
-            f"> **Prepare for departure and enjoy your travel experience with airBaltic! 🍏**"
+            f"> Welcome aboard! Review guidelines in `!rules` and use `!commands` to explore our premium systems."
         )
         await welcome_channel.send(welcome_text)
 
-# 1. Official Fleet Command
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.MissingAnyRole) or isinstance(error, commands.CheckFailure):
+        await ctx.send("❌ **Access Denied:** Your clearance rank is insufficient to execute this airline protocol.")
+        return
+    raise error
+
+# 1. System Commands Index Directory
 @bot.command()
-async def fleet(ctx):
+async def commands(ctx):
     embed = discord.Embed(
-        title="✈️ AIRBALTIC OFFICIAL AIRCRAFT FLEET",
-        description="airBaltic proudly operates the most modern, efficient, and environmentally friendly single-type fleet in virtual aviation.",
+        title="✈️ AIRBALTIC ADVANCED SYSTEM UTILITIES",
+        description="Premium automated customer service and logistics interface directory.",
         color=0xCDDA32
     )
     embed.add_field(
-        name="🛩️ Flagship Aircraft: Airbus A220-300", 
+        name="🎮 Public Passenger Tools",
         value=(
-            "• **Seating Capacity:** 145/148 Seats (Dual-Class Configuration)\n"
-            "• **Propulsion:** Pratt & Whitney GTF Engines\n"
-            "• **Cruising Speed:** Mach 0.78 (829 km/h)\n"
-            "• **Maximum Range:** 6,112 km (3,300 nmi)\n"
-            "• **PTFS Flight Status:** Fully operational for mainline routes."
-        ), 
+            "• `!commands` - Open this automated user service index panel.\n"
+            "• `!rules` - View our 10 official server operational codes.\n"
+            "• `!fleet` - Inspect layouts across our Airbus and Boeing configurations.\n"
+            "• `!flight` - Trace active route vectors and destination clocks.\n"
+            "• `!checkin` - Check in for a flight and print an electronic boarding pass.\n"
+            "• `!club` - View your airBaltic Club frequent flyer stats and tier standings."
+        ),
         inline=False
     )
-    embed.set_footer(text="Think Green, Fly Green. Thank you for choosing airBaltic!")
+    embed.add_field(
+        name="💼 Staff & Pilot Operations (LOCKED)",
+        value=(
+            "• `!status <NEW_STATUS>` - Instantly update the operation flight status board.\n"
+            "• `!firstcall` - Broadcast the initial boarding call announcement.\n"
+            "• `!rows` - Broadcast boarding notice restricted to back seat rows.\n"
+            "• `!finalcall` - Broadcast the urgent final boarding call alert card.\n"
+            "• `!logflight <@user>` - Record completed commercial flight miles for a pilot.\n"
+            "• `!clear <amount>` - Instantly sweep out expired text layouts up to 100 entries.\n"
+            "• `!createflight <No. / Status / Date / Gate / Dest>` - Log a route path map setup.\n"
+            "• `!setrules <text>` / `!setfooter <text>` - Update master rule strings on-the-fly."
+        ),
+        inline=False
+    )
     await ctx.send(embed=embed)
 
-# 2. Rules Command
+# 📢 BOARDING CALL 1: First Call Notice (Locked to Staff)
 @bot.command()
-async def rules(ctx):
+@commands.has_any_role("CEO", "Co-Founder", "Staff")
+async def firstcall(ctx):
     embed = discord.Embed(
-        title="📜 AIRBALTIC OFFICIAL SERVER RULES",
-        description="Welcome to airBaltic! Please follow our official airline guidelines:",
+        title="🛫 airBaltic ANNOUNCEMENT: FIRST BOARDING CALL",
+        description=f"Good day passengers, airBaltic flight **{flight_data['number']}** to **{flight_data['destination']}** is now ready for boarding.",
         color=0xCDDA32
     )
-    embed.add_field(name="Current Server Guidelines:", value=current_rules, inline=False)
-    embed.set_footer(text=current_footer)
-    await ctx.send(embed=embed)
+    embed.add_field(name="📍 Location:", value=f"Please proceed immediately to **{flight_data['gate']}**.", inline=False)
+    embed.add_field(name="📋 Directives:", value="Please have your electronic boarding passes ready for validation by ground crew via `!checkin`.", inline=False)
+    embed.set_footer(text="Thank you for flying green with airBaltic.")
+    await ctx.send("@everyone", embed=embed)
 
-# 3. Rule Changer Command
+# 📢 BOARDING CALL 2: Seat Row Restriction Notice (Locked to Staff)
 @bot.command()
-async def setrules(ctx, *, new_text: str):
-    global current_rules
-    if ctx.author.guild_permissions.administrator:
-        current_rules = new_text
-        await ctx.send("✅ **CEO Update Complete:** Rules updated!")
-    else:
-        await ctx.send("❌ Access Denied.")
-
-# 4. Footer Changer Command
-@bot.command()
-async def setfooter(ctx, *, new_footer: str):
-    global current_footer
-    if ctx.author.guild_permissions.administrator:
-        current_footer = new_footer
-        await ctx.send("✅ **CEO Update Complete:** Footer updated!")
-    else:
-        await ctx.send("❌ Access Denied.")
-
-# 5. Flight Tracking Command
-@bot.command()
-async def flight(ctx):
+@commands.has_any_role("CEO", "Co-Founder", "Staff")
+async def rows(ctx):
     embed = discord.Embed(
-        title="✈️ AIRBALTIC OFFICIAL FLIGHT ANNOUNCEMENT ✈️",
+        title="✈️ airBaltic ANNOUNCEMENT: BOARDING BY SEAT ROWS",
+        description=f"Attention passengers on flight **{flight_data['number']}** with destination **{flight_data['destination']}**.",
         color=0xCDDA32
     )
-    countdown_str = ""
-    if "august 24" in flight_data["date"].lower():
-        current_year = datetime.now().year
-        try:
-            target_date = datetime(current_year, 8, 24)
-            days_left = (target_date - datetime.now()).days
-            if days_left > 0:
-                countdown_str = f"\n⏳ **Countdown:** Only `{days_left} days` until departure!"
-            elif days_left == 0:
-                countdown_str = f"\n🚨 **Status Update:** The flight is happening TODAY!"
-        except Exception:
-            pass
-
-    status_emoji = "🟢" if "boarding" in flight_data["status"].lower() or "active" in flight_data["status"].lower() else "🟡"
-    embed.add_field(name="Flight Number:", value=f"`{flight_data['number']}`", inline=True)
-    embed.add_field(name="Operations Status:", value=f"{status_emoji} **{flight_data['status'].upper()}**", inline=True)
-    embed.add_field(name="Scheduled Date:", value=f"`{flight_data['date']}`{countdown_str}", inline=False)
-    embed.add_field(name="Airport Gate:", value=f"`{flight_data['gate']}`", inline=False)
-    embed.add_field(name="Route Destination:", value=f"`{flight_data['destination']}`", inline=False)
-    embed.set_footer(text="Please ensure your flight tickets are ready prior to reaching the gate. Thank you for flying airBaltic!")
+    embed.add_field(name="💺 Active Boarding Zone:", value="We are now welcoming passengers holding boarding passes for **Rows 15 through 30** to board the aircraft.", inline=False)
+    embed.add_field(name="📋 Directives:", value="All other passengers, please remain seated in the gate terminal area until your row zone is announced.", inline=False)
+    embed.set_footer(text="We appreciate your cooperation during boarding.")
     await ctx.send(embed=embed)
 
-# 6. Custom Flight Creator Command
+# 📢 BOARDING CALL 3: Final Call Notice (Locked to Staff)
 @bot.command()
-async def createflight(ctx, *, details: str):
+@commands.has_any_role("CEO", "Co-Founder", "Staff")
+async def finalcall(ctx):
+    embed = discord.Embed(
+        title="🚨 airBaltic ANNOUNCEMENT: FINAL BOARDING CALL",
+        description=f"This is the final boarding announcement for remaining passengers booked on airBaltic flight **{flight_data['number']}** bound for **{flight_data['destination']}**.",
+        color=0xFF3333
+    )
+    embed.add_field(name="⚠️ Immediate Action Required:", value=f"The aircraft doors are preparing to close. All remaining passengers must clear security and report to **{flight_data['gate']}** immediately.", inline=False)
+    embed.set_footer(text="Final boarding alert • Flight operations closing.")
+    await ctx.send("@everyone", embed=embed)
+
+# 📊 FLIGHT STATUS BOARD MANAGEMENT SYSTEM (Locked to Staff)
+@bot.command()
+@commands.has_any_role("CEO", "Co-Founder", "Staff")
+async def status(ctx, *, new_status: str):
     global flight_data
-    if not ctx.author.guild_permissions.administrator:
-        await ctx.send("❌ You do not have permission to log flight operations.")
-        return
-    try:
-        parts = [p.strip() for p in details.split("/")]
-        if len(parts) < 5:
-            await ctx.send("❌ **Format Error!** Use: `!createflight FlightNumber / Status / Date / Gate / Destination`")
-            return
-        flight_data["number"] = parts[0]
-        flight_data["status"] = parts[1]
-        flight_data["date"] = parts[2]
-        flight_data["gate"] = parts[3]
-        flight_data["destination"] = parts[4]
-        await ctx.send("✅ **CEO Operations Logged:** Itinerary generated successfully! Type `!flight` to view.")
-    except Exception as e:
-        await ctx.send(f"❌ Error: {str(e)}")
-
-# 7. Recruitment Command
-@bot.command()
-async def hiring(ctx):
-    ad_text = (
-        "🇱🇻  **airBaltic**\n"
-        "`🟢` **`think green, fly green`**\n\n"
-        "> airBaltic is the primary airline of the Baltics, operating an elite, all-Airbus A220-300 fleet.\n\n"
-        "🔹 **Now Hiring Premium Crew:** Elevate your career by managing our elite Business Class cabins.\n"
-        "🔹 **Aviation Realism:** Train under advanced flight protocols, structural routes, and live ATC.\n\n"
-        "📸 https://imgur.com"
+    flight_data["status"] = new_status.upper()
+    
+    status_emoji = "🟢" if "board" in new_status.lower() or "active" in new_status.lower() else "🟡"
+    if "cancel" in new_status.lower() or "delay" in new_status.lower():
+        status_emoji = "🔴"
+        
+    embed = discord.Embed(
+        title="📊 airBaltic REAL-TIME OPERATIONS STATUS",
+        description="The live schedule and operational state of our mainline flight route has been updated.",
+        color=0xCDDA32
     )
-    await ctx.send(ad_text)
+    embed.add_field(name="Flight Identifier:", value=f"`{flight_data['number']}`", inline=True)
+    embed.add_field(name="Current Flight State:", value=f"{status_emoji} **{flight_data['status']}**", inline=True)
+    embed.add_field(name="Route Vectors:", value=f"🛫 Riga (RIX) ➡️ 🛬 `{flight_data['destination']}`", inline=False)
+    embed.set_footer(text="Type !flight to view the full detailed travel itinerary block.")
+    await ctx.send(embed=embed)
 
-# 🌐 BUILT-IN WEB PING SERVER (Prevents 502 Errors)
-app = Flask('')
+# 2. Ticket Check-In Boarding Pass Generator
+@bot.command()
+async def checkin(ctx):
+    seat_letters = ["A", "B", "C", "D", "F"]
+    seat_num = f"{random.randint(1, 28)}{random.choice(seat_letters)}"
+    seq_num = f"0{random.randint(10, 99)}"
+    
+    embed = discord.Embed(
+        title="🎟️ ELECTRONIC BOARDING PASS • VALIDATED",
+        description="Your virtual ticket has been confirmed in the airBaltic manifest database.",
+        color=0xCDDA32
+    )
+    embed.add_field(name="Passenger Name:", value=f"`{ctx.author.display_name}`", inline=True)
+    embed.add_field(name="Flight Assignment:", value=f"`{flight_data['number']}`", inline=True)
+    embed.add_field(name="Assigned Seat:", value=f"💺 `{seat_num}`", inline=True)
+    embed.add_field(name="Gate Assignment:", value=f"🚪 `{flight_data['gate']}`", inline=False)
+    embed.add_field(name="Route Vector:", value=f"🛫 RIX ➡️ 🛬 `{flight_data['destination']}`", inline=False)
+    embed.set_footer(text=f"Sequence No: {seq_num} • Please arrive at the terminal prior to departure.")
+    await ctx.send(embed=embed)
 
-@app.route('/')
-def home():
-    return "🟢 airBaltic Bot Web Server is Fully Operational!"
-
-def run_web_server():
-    app.run(host='0.0.0.0', port=10000)
-
-def keep_alive():
-    t = Thread(target=run_web_server)
-    t.start()
-
-# Start web listener right before launching bot
-keep_alive()
-bot.run(os.environ.get("DISCORD_TOKEN"))
-
+# 3. Updated Loyalty Club Tracking with Your Custom Tier Milestones
+@bot.command()
+async def club(ctx):
+    user_id = str(ctx.author.id)
+    miles = club_miles.get(user_id, 0)
+    
+    # Custom milestones evaluation parsing logic
+    if miles >= 35000: tier = "💎 Business Class Club"
