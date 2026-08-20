@@ -1,3 +1,4 @@
+
 import discord
 from discord.ext import commands
 import os
@@ -12,7 +13,7 @@ intents.members = True
 
 bot = commands.Bot(command_prefix="!", intents=intents)
 
-# Core Dynamic Memory Banks
+# Pre-loaded with your official 10 server guidelines
 current_rules = (
     "1. While in our Server, follow Roblox's TOS and Discord TOS.\n"
     "2. Be respectful to anybody in the server no matter what.\n"
@@ -44,7 +45,7 @@ async def on_ready():
     print(f"🟢 airBaltic Utilities is online as {bot.user.name}!")
     await bot.change_presence(activity=discord.Game(name="PTFS | type !commands"))
 
-# 📥 AUTOMATED WELCOME, AUTO-ROLE & AUTO-NAME SYSTEM
+# 📥 AUTOMATED WELCOME, MULTI-ROLE & AUTO-NAME SYSTEM
 @bot.event
 async def on_member_join(member):
     pax_role = discord.utils.get(member.guild.roles, name="Passenger")
@@ -74,14 +75,15 @@ async def on_member_join(member):
         )
         await welcome_channel.send(welcome_text)
 
+# Handles role permissions errors smoothly 
 @bot.event
 async def on_command_error(ctx, error):
     if isinstance(error, commands.MissingAnyRole) or isinstance(error, commands.CheckFailure):
-        await ctx.send("❌ **Access Denied:** Your clearance rank is insufficient to execute this airline protocol.")
+        await ctx.send("❌ **Access Denied:** This command is strictly locked to the **CEO** and **CTO** positions.")
         return
     raise error
 
-# 1. System Commands Index Directory
+# 1. System Commands Index Directory Index
 @bot.command()
 async def commands(ctx):
     embed = discord.Embed(
@@ -94,22 +96,23 @@ async def commands(ctx):
         value=(
             "• `!commands` - Open this automated user service index panel.\n"
             "• `!rules` - View our 10 official server operational codes.\n"
-            "• `!fleet` - Inspect layouts across our Airbus and Boeing configurations.\n"
-            "• `!flight` - Trace active route vectors and destination clocks.\n"
+            "• `!fleet` - Inspect our active aircraft profile configurations.\n"
+            "• `!flight` - Check current live flight details and routes.\n"
             "• `!checkin` - Check in for a flight and print an electronic boarding pass.\n"
             "• `!club` - View your airBaltic Club frequent flyer stats and tier standings."
         ),
         inline=False
     )
     embed.add_field(
-        name="💼 Staff & Pilot Operations (LOCKED)",
+        name="💼 Executive Operations (LOCKED TO CEO/CTO)",
         value=(
-            "• `!status <NEW_STATUS>` - Instantly update the operation flight status board.\n"
+            "• `!status <NEW_STATUS>` - Update the operational flight status board.\n"
             "• `!firstcall` - Broadcast the initial boarding call announcement.\n"
             "• `!rows` - Broadcast boarding notice restricted to back seat rows.\n"
             "• `!finalcall` - Broadcast the urgent final boarding call alert card.\n"
             "• `!logflight <@user>` - Record completed commercial flight miles for a pilot.\n"
-            "• `!clear <amount>` - Instantly sweep out expired text layouts up to 100 entries.\n"
+            "• `!givemiles <@user> <amount>` - Bulk award points to an account ledger.\n"
+            "• `!clear <amount>` - Sweep out chat lines up to 100 entries.\n"
             "• `!createflight <No. / Status / Date / Gate / Dest>` - Log a route path map setup.\n"
             "• `!setrules <text>` / `!setfooter <text>` - Update master rule strings on-the-fly."
         ),
@@ -117,9 +120,9 @@ async def commands(ctx):
     )
     await ctx.send(embed=embed)
 
-# 📢 BOARDING CALL 1: First Call Notice (Locked to Staff)
+# 📢 BOARDING CALL 1: First Call Notice (LOCKED TO CEO/CTO)
 @bot.command()
-@commands.has_any_role("CEO", "Co-Founder", "Staff")
+@commands.has_any_role("CEO", "CTO")
 async def firstcall(ctx):
     embed = discord.Embed(
         title="🛫 airBaltic ANNOUNCEMENT: FIRST BOARDING CALL",
@@ -131,9 +134,9 @@ async def firstcall(ctx):
     embed.set_footer(text="Thank you for flying green with airBaltic.")
     await ctx.send("@everyone", embed=embed)
 
-# 📢 BOARDING CALL 2: Seat Row Restriction Notice (Locked to Staff)
+# 📢 BOARDING CALL 2: Seat Row Restriction Notice (LOCKED TO CEO/CTO)
 @bot.command()
-@commands.has_any_role("CEO", "Co-Founder", "Staff")
+@commands.has_any_role("CEO", "CTO")
 async def rows(ctx):
     embed = discord.Embed(
         title="✈️ airBaltic ANNOUNCEMENT: BOARDING BY SEAT ROWS",
@@ -145,9 +148,9 @@ async def rows(ctx):
     embed.set_footer(text="We appreciate your cooperation during boarding.")
     await ctx.send(embed=embed)
 
-# 📢 BOARDING CALL 3: Final Call Notice (Locked to Staff)
+# 📢 BOARDING CALL 3: Final Call Notice (LOCKED TO CEO/CTO)
 @bot.command()
-@commands.has_any_role("CEO", "Co-Founder", "Staff")
+@commands.has_any_role("CEO", "CTO")
 async def finalcall(ctx):
     embed = discord.Embed(
         title="🚨 airBaltic ANNOUNCEMENT: FINAL BOARDING CALL",
@@ -158,9 +161,9 @@ async def finalcall(ctx):
     embed.set_footer(text="Final boarding alert • Flight operations closing.")
     await ctx.send("@everyone", embed=embed)
 
-# 📊 FLIGHT STATUS BOARD MANAGEMENT SYSTEM (Locked to Staff)
+# 📊 FLIGHT STATUS BOARD MANAGEMENT SYSTEM (LOCKED TO CEO/CTO)
 @bot.command()
-@commands.has_any_role("CEO", "Co-Founder", "Staff")
+@commands.has_any_role("CEO", "CTO")
 async def status(ctx, *, new_status: str):
     global flight_data
     flight_data["status"] = new_status.upper()
@@ -200,11 +203,10 @@ async def checkin(ctx):
     embed.set_footer(text=f"Sequence No: {seq_num} • Please arrive at the terminal prior to departure.")
     await ctx.send(embed=embed)
 
-# 3. Updated Loyalty Club Tracking with Your Custom Tier Milestones
+# 3. Loyalty Club Tracking with Your Exact Milestone Tiers
 @bot.command()
 async def club(ctx):
     user_id = str(ctx.author.id)
     miles = club_miles.get(user_id, 0)
     
-    # Custom milestones evaluation parsing logic
     if miles >= 35000: tier = "💎 Business Class Club"
